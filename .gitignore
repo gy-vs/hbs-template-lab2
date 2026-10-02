@@ -1,0 +1,25 @@
+.rvmrc
+.DS_Store
+/tmp/
+*.sublime-project
+*.sublime-workspace
+npm-debug.log
+.idea
+/yarn-error.log
+/yarn.lock
+node_modules
+/handlebars-release.tgz
+.nyc_output
+
+# Generated files
+/coverage/
+/dist/
+/tests/bench/results/
+/tests/integration/*/dist/
+/spec/tmp/*
+
+# local secrets
+.env
+.env.*
+*.pem
+*.key

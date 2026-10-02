@@ -1,0 +1,17 @@
+{
+  "name": "multi-nodejs-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple integration test with all relevant NodeJS-versions.",
+  "keywords": [],
+  "license": "MIT",
+  "author": "Nils Knappmeier",
+  "type": "module",
+  "scripts": {
+    "test": "node run-handlebars.js",
+    "test-precompile": "handlebars precompile-test-template.txt.hbs"
+  },
+  "dependencies": {
+    "handlebars": "file:../../.."
+  }
+}

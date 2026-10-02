@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "es2015",
+    "moduleResolution": "bundler",
+    "lib": ["es6"],
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "strict": true,
+    "noEmit": true,
+
+    "types": [],
+    "paths": {
+      "handlebars": ["../"]
+    }
+  }
+}
