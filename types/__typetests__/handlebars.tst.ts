@@ -352,6 +352,42 @@ describe('Handlebars.parseWithoutProcessing', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Handlebars.collectDataPaths
+// ---------------------------------------------------------------------------
+describe('Handlebars.collectDataPaths', () => {
+  test('returns DataPathsResult for a string', () => {
+    expect(
+      Handlebars.collectDataPaths('{{#each items}}{{name}}{{/each}}')
+    ).type.toBe<Handlebars.DataPathsResult>();
+  });
+
+  test('accepts a parsed AST', () => {
+    expect(
+      Handlebars.collectDataPaths(Handlebars.parse('{{name}}'))
+    ).type.toBe<Handlebars.DataPathsResult>();
+  });
+
+  test('result paths are strings', () => {
+    const result = Handlebars.collectDataPaths('{{name}}');
+    expect(result.paths).type.toBe<string[]>();
+    expect(result.ambiguousReads).type.toBe<Handlebars.AmbiguousDataRead[]>();
+  });
+
+  test('ambiguous read kind is the documented union', () => {
+    const marker: Handlebars.AmbiguousDataRead = {
+      kind: 'blockHelper',
+      reads: ['x'],
+      helper: 'box',
+    };
+    expect(marker.kind).type.toBe<'blockHelper' | 'partial' | 'lookup'>();
+    expect(marker.reads).type.toBe<string[]>();
+    expect(marker.helper).type.toBe<string | null | undefined>();
+    expect(marker.partial).type.toBe<string | null | undefined>();
+    expect(marker.object).type.toBe<string | null | undefined>();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // RuntimeOptions
 // ---------------------------------------------------------------------------
 describe('RuntimeOptions', () => {

@@ -66,6 +66,84 @@ declare namespace Handlebars {
 
   export { parse, parseWithoutProcessing, ParseOptions };
 
+  /**
+   * A root-relative data path read by a template. Segments are joined
+   * with `.`; the element of an `each` iteration is written as `*`.
+   *
+   * For example, the `name` read inside
+   * `{{#each items}}{{name}}{{/each}}` is `items.*.name`.
+   */
+  export type DataPath = string;
+
+  /**
+   * A data read that occurs at a position whose context cannot be
+   * resolved statically. The names are reported relative to that
+   * position instead of being guessed as root-relative paths.
+   */
+  export interface AmbiguousDataRead {
+    /**
+     * What makes the position unresolvable:
+     * - `blockHelper`: a custom block helper (including an `each`/`with`
+     *   driven by a non-path expression), which chooses the body's
+     *   context at runtime.
+     * - `partial`: a partial invocation, including `{{#>partial}}`
+     *   blocks whose body is rendered by the partial.
+     * - `lookup`: a `{{lookup}}` call whose selected property is only
+     *   known at runtime.
+     */
+    kind: 'blockHelper' | 'partial' | 'lookup';
+    /**
+     * Names read within this position, relative to the position. For an
+     * iteration element this is prefixed with `*` (e.g. `*.name`).
+     */
+    reads: string[];
+    /** Source location of the construct in the template. */
+    loc?: hbs.AST.SourceLocation;
+
+    /** Name of the custom block helper (`kind === 'blockHelper'`). */
+    helper?: string | null;
+    /** Source text of the expression that produces the block context. */
+    expression?: string | null;
+
+    /** Name of the partial (`kind === 'partial'`), null when dynamic. */
+    partial?: string | null;
+    /** Whether the partial name itself is a dynamic expression. */
+    dynamic?: boolean;
+    /**
+     * Root-relative path passed as the partial's context argument, when
+     * present (e.g. `user` in `{{>partial user}}`).
+     */
+    context?: DataPath | null;
+
+    /** Root-relative path of the object passed to `lookup`. */
+    object?: DataPath | null;
+    /** Root-relative path holding the dynamic `lookup` property name. */
+    key?: DataPath | null;
+    /** The literal property name when `lookup` uses a string argument. */
+    literalKey?: string | null;
+  }
+
+  export interface DataPathsResult {
+    /**
+     * Every data path the template reads, root-relative, deduplicated
+     * and sorted lexicographically.
+     */
+    paths: DataPath[];
+    /**
+     * Reads whose root-relative path cannot be determined statically,
+     * grouped by the construct that introduces the uncertainty.
+     */
+    ambiguousReads: AmbiguousDataRead[];
+  }
+
+  /**
+   * Statically collects the data paths a template reads from its input
+   * context. See {@link DataPathsResult} for the returned shape.
+   */
+  export function collectDataPaths(
+    input: string | hbs.AST.Program
+  ): DataPathsResult;
+
   export function registerHelper(name: string, fn: HelperDelegate): void;
   export function registerHelper(name: HelperDeclareSpec): void;
   export function unregisterHelper(name: string): void;
