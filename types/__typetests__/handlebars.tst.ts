@@ -10,6 +10,7 @@ import {
   CustomHelperName,
   Logger,
   CompilerInfo,
+  collectDataPaths,
   hbs,
 } from 'handlebars';
 
@@ -75,6 +76,42 @@ describe('Handlebars.template', () => {
     expect(Handlebars.template(spec)).type.toBe<
       HandlebarsTemplateDelegate<any>
     >();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Handlebars.collectDataPaths
+// ---------------------------------------------------------------------------
+describe('Handlebars.collectDataPaths', () => {
+  test('accepts a template string and returns CollectDataPathsResult', () => {
+    expect(
+      Handlebars.collectDataPaths('{{name}}')
+    ).type.toBe<Handlebars.CollectDataPathsResult>();
+  });
+
+  test('accepts a parsed AST', () => {
+    const ast = Handlebars.parse('{{name}}');
+    expect(
+      Handlebars.collectDataPaths(ast)
+    ).type.toBe<Handlebars.CollectDataPathsResult>();
+  });
+
+  test('result has the documented shape', () => {
+    const result = Handlebars.collectDataPaths('{{name}}');
+    expect(result.paths).type.toBe<string[]>();
+    expect(result.unresolved).type.toBe<Handlebars.UnresolvedDataPaths[]>();
+    const entry = result.unresolved[0]!;
+    expect(entry.kind).type.toBe<
+      'partial' | 'block-helper' | 'lookup' | 'decorator'
+    >();
+    expect(entry.name).type.toBe<string | null>();
+    expect(entry.paths).type.toBe<string[]>();
+  });
+
+  test('is available as a named export', () => {
+    expect(
+      collectDataPaths('{{name}}')
+    ).type.toBe<Handlebars.CollectDataPathsResult>();
   });
 });
 

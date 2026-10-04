@@ -91,6 +91,83 @@ declare namespace Handlebars {
     input: any,
     options?: PrecompileOptions
   ): TemplateSpecification;
+
+  /**
+   * The result of {@link Handlebars.collectDataPaths}.
+   */
+  export interface CollectDataPathsResult {
+    /**
+     * All data paths the template reads, resolved against the root context,
+     * de-duplicated and sorted lexicographically. Segments are joined with
+     * `.`; the per-item context of an `{{#each}}` iteration is written as
+     * `*`, e.g. `items.*.name`. A segment that itself contains a dot is
+     * quoted the way it would be written in a template (`a.[b.c]`). The
+     * empty string denotes a read of the root context itself (e.g. a
+     * top-level `{{this}}`).
+     */
+    paths: string[];
+    /**
+     * Reads that cannot be resolved to concrete data paths statically,
+     * grouped by the construct that causes the ambiguity. Entries are
+     * sorted by `kind` and `name`.
+     */
+    unresolved: UnresolvedDataPaths[];
+  }
+
+  /**
+   * Reads collected below a position whose context is only known at
+   * runtime. The contained paths are written as they appear in the
+   * template, relative to that position — they are intentionally not
+   * stitched onto a guessed absolute path.
+   */
+  export interface UnresolvedDataPaths {
+    /**
+     * Which construct makes the context unknown:
+     * - `partial` — a partial call (`{{> foo}}`), a partial block
+     *   (`{{#> foo}}`), or an inline partial definition
+     *   (`{{#*inline "foo"}}`), whose body is rendered with a context
+     *   chosen at the invocation site
+     * - `block-helper` — a block helper that is not one of `each`, `with`,
+     *   `if`, `unless` (or one of those with a context that cannot be
+     *   determined statically, e.g. `{{#each (computed)}}`)
+     * - `lookup` — a `lookup` call, which reads a dynamically named
+     *   property
+     * - `decorator` — a decorator, which may alter the program at runtime
+     */
+    kind: 'partial' | 'block-helper' | 'lookup' | 'decorator';
+    /**
+     * Identifies the construct: the partial name for `partial` (null when
+     * the name is computed dynamically), the helper or decorator name for
+     * `block-helper` and `decorator`, and the object expression as written
+     * for `lookup` (null when it is not a path, e.g. a subexpression).
+     */
+    name: string | null;
+    /**
+     * The paths read inside this construct, as written in the template,
+     * de-duplicated and sorted lexicographically. Empty for plain partial
+     * calls (their body is not part of the template) and for `lookup`.
+     */
+    paths: string[];
+  }
+
+  /**
+   * Collects the data paths that a template reads.
+   *
+   * Every path that can be determined statically is resolved against the
+   * root context, following the same scoping rules as the renderer
+   * (`{{#each}}`, `{{#with}}`, `../`, block params, `@root`, ...), and
+   * returned in {@link CollectDataPathsResult.paths}. Reads below custom
+   * block helpers, partials, dynamic `lookup`s and decorators cannot be
+   * resolved statically and are listed in
+   * {@link CollectDataPathsResult.unresolved} instead. `@`-variables such
+   * as `@index` or `@key` are provided by helpers at runtime and are not
+   * counted as data reads.
+   *
+   * @param input A template string or a parsed Handlebars AST.
+   */
+  export function collectDataPaths(
+    input: string | hbs.AST.Program
+  ): CollectDataPathsResult;
   export function template<T = any>(
     precompilation: TemplateSpecification
   ): HandlebarsTemplateDelegate<T>;
@@ -297,6 +374,7 @@ declare module 'handlebars/runtime' {
 export const create: typeof Handlebars.create;
 export const compile: typeof Handlebars.compile;
 export const precompile: typeof Handlebars.precompile;
+export const collectDataPaths: typeof Handlebars.collectDataPaths;
 export const template: typeof Handlebars.template;
 export { parse, parseWithoutProcessing } from '@handlebars/parser';
 export const VERSION: typeof Handlebars.VERSION;
